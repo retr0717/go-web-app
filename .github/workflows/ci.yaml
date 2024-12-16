@@ -16,7 +16,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
     
-    - name: Set up go 1.23.4
+    - name: Set up Go 1.23.4
       uses: actions/setup-go@v4
       with:
         go-version: 1.23.4
@@ -53,11 +53,15 @@ jobs:
       uses: golangci/golangci-lint-action@v6
       with:
         version: v1.56.2
-        verbose: true
-        flags: "--print-resolved-config --issues-exit-code=0"
+        args: "--path-prefix=. --issues-exit-code=1"
 
     - name: Debug output of golangci-lint
-      run: cat .golangci-lint.log || echo "No additional logs found"
+      run: |
+        if [ -f .golangci-lint.log ]; then
+          cat .golangci-lint.log
+        else
+          echo "No additional logs found"
+        fi
 
   push:
     runs-on: ubuntu-latest
