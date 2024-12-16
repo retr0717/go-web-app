@@ -1,32 +1,37 @@
-name: CI
+# CICD using GitHub actions
 
+name: CI/CD
+
+# Exclude the workflow to run on changes to the helm chart
 on:
   push:
     branches:
       - main
     paths-ignore:
-      - 'README.md'
       - 'helm/**'
+      - 'k8s/**'
+      - 'README.md'
 
 jobs:
+
   build:
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-    
-    - name: Set up Go 1.23.4
-      uses: actions/setup-go@v4
+
+    - name: Set up Go 1.22
+      uses: actions/setup-go@v2
       with:
-        go-version: 1.23.4
-    
+        go-version: 1.22
+
     - name: Build
       run: go build -o go-web-app
 
     - name: Test
       run: go test ./...
-
+  
   code-quality:
     runs-on: ubuntu-latest
 
@@ -34,43 +39,11 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Debug Go version
-      run: go version
-
-    - name: Debug Go environment
-      run: go env
-
-    - name: Debug Go module files
-      run: cat go.mod
-
-    - name: Clean Go module cache
-      run: go clean -modcache
-
-    - name: Install dependencies
-      run: go mod tidy
-
-    - name: Install goimports
-      run: |
-        go install golang.org/x/tools/cmd/goimports@latest
-        echo "$HOME/go/bin" >> $GITHUB_PATH  # Add Go binary path to PATH
-
-    - name: Run goimports to clean up unused imports
-      run: goimports -w .
-
     - name: Run golangci-lint
       uses: golangci/golangci-lint-action@v6
       with:
         version: v1.56.2
-        args: "--path-prefix=. --issues-exit-code=1"
-
-    - name: Debug output of golangci-lint
-      run: |
-        if [ -f .golangci-lint.log ]; then
-          cat .golangci-lint.log
-        else
-          echo "No additional logs found"
-        fi
-
+  
   push:
     runs-on: ubuntu-latest
 
@@ -89,13 +62,13 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-    - name: Build and Push image
+    - name: Build and Push action
       uses: docker/build-push-action@v6
       with:
         context: .
         file: ./Dockerfile
         push: true
-        tags: ${{ secrets.DOCKERHUB_USERNAME }}/go-web-app:${{ github.sha }}
+        tags: ${{ secrets.DOCKERHUB_USERNAME }}/go-web-app:${{github.run_id}}
 
   update-newtag-in-helm-chart:
     runs-on: ubuntu-latest
@@ -106,14 +79,11 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0
         token: ${{ secrets.TOKEN }}
 
     - name: Update tag in Helm chart
-      env:
-        RUN_ID: ${{ github.run_id }}
       run: |
-        sed -i "s/tag:.*/tag: \"${RUN_ID}\"/" helm/go-web-app-chart/values.yaml
+        sed -i 's/tag: .*/tag: "${{github.run_id}}"/' helm/go-web-app-chart/values.yaml
 
     - name: Commit and push changes
       run: |
@@ -122,3 +92,4 @@ jobs:
         git add helm/go-web-app-chart/values.yaml
         git commit -m "Update tag in Helm chart"
         git push
+
