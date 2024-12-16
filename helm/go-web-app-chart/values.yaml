@@ -1,0 +1,6 @@
+replicaCount: 1
+
+image:
+  respository: aka717/go-web-app
+  pullPolicy: IfNotPresent
+  tag: "v1"
