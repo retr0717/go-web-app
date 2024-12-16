@@ -10,23 +10,23 @@ on:
 
 jobs:
   build:
-    runs-on:  ubuntu-latest
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
     
-    - name: Set up go 1.22
-      uses: actions/setup-go@v2
+    - name: Set up go 1.23.4
+      uses: actions/setup-go@v4
       with:
         go-version: 1.23.4
     
     - name: Build
-      run:  go build -o go-web-app
+      run: go build -o go-web-app
 
-    - name: test
-      run:  go test ./...
-  
+    - name: Test
+      run: go test ./...
+
   code-quality:
     runs-on: ubuntu-latest
 
@@ -57,13 +57,13 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-    - name: Build and Push action
+    - name: Build and Push image
       uses: docker/build-push-action@v6
       with:
         context: .
         file: ./Dockerfile
         push: true
-        tags: ${{ secrets.DOCKERHUB_USERNAME }}/go-web-app:${{github.run_id}}
+        tags: ${{ secrets.DOCKERHUB_USERNAME }}/go-web-app:${{ github.sha }}
 
   update-newtag-in-helm-chart:
     runs-on: ubuntu-latest
@@ -74,11 +74,14 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
+        fetch-depth: 0
         token: ${{ secrets.TOKEN }}
 
     - name: Update tag in Helm chart
+      env:
+        RUN_ID: ${{ github.run_id }}
       run: |
-        sed -i 's/tag: .*/tag: "${{github.run_id}}"/' helm/go-web-app-chart/values.yaml
+        sed -i "s/tag:.*/tag: \"${RUN_ID}\"/" helm/go-web-app-chart/values.yaml
 
     - name: Commit and push changes
       run: |
