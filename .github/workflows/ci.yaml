@@ -41,7 +41,7 @@ jobs:
       run: go env
 
     - name: Debug Go module files
-      run: cat go.mod && cat go.sum
+      run: cat go.mod
 
     - name: Clean Go module cache
       run: go clean -modcache
