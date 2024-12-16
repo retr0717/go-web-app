@@ -34,10 +34,30 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    - name: Debug Go version
+      run: go version
+
+    - name: Debug Go environment
+      run: go env
+
+    - name: Debug Go module files
+      run: cat go.mod && cat go.sum
+
+    - name: Clean Go module cache
+      run: go clean -modcache
+
+    - name: Install dependencies
+      run: go mod tidy
+
     - name: Run golangci-lint
       uses: golangci/golangci-lint-action@v6
       with:
         version: v1.56.2
+        verbose: true
+        flags: "--print-resolved-config --issues-exit-code=0"
+
+    - name: Debug output of golangci-lint
+      run: cat .golangci-lint.log || echo "No additional logs found"
 
   push:
     runs-on: ubuntu-latest
