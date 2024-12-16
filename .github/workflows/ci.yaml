@@ -45,6 +45,9 @@ jobs:
 
     - name: Clean Go module cache
       run: go clean -modcache
+      
+    - name: Run goimports to clean up unused imports
+      run: goimports -w .
 
     - name: Install dependencies
       run: go mod tidy
