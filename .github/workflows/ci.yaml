@@ -46,16 +46,16 @@ jobs:
     - name: Clean Go module cache
       run: go clean -modcache
 
+    - name: Install dependencies
+      run: go mod tidy
+
     - name: Install goimports
       run: |
         go install golang.org/x/tools/cmd/goimports@latest
-        echo "::add-path::$HOME/go/bin"  # Add Go binary path to PATH
+        echo "$HOME/go/bin" >> $GITHUB_PATH  # Add Go binary path to PATH
 
     - name: Run goimports to clean up unused imports
       run: goimports -w .
-
-    - name: Install dependencies
-      run: go mod tidy
 
     - name: Run golangci-lint
       uses: golangci/golangci-lint-action@v6
