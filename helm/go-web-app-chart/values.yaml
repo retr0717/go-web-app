@@ -3,4 +3,4 @@ replicaCount: 1
 image:
   respository: aka717/go-web-app
   pullPolicy: IfNotPresent
-  tag: "12346896549"
+  tag: "12346963906"
